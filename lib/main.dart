@@ -37,6 +37,7 @@ class _MyHomePageState extends State<MyHomePage> {
   String verId;
   String phone;
   bool codeSent = false;
+  String token = "";
 
   @override
   Widget build(BuildContext context) {
@@ -48,6 +49,7 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
+            Text(token),
             codeSent
                 ? OTPTextField(
                     length: 6,
@@ -64,7 +66,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     decoration: InputDecoration(
                         labelText: 'Phone Number',
                         border: OutlineInputBorder(borderSide: BorderSide())),
-                    initialCountryCode: 'IN',
+                    initialCountryCode: 'UY',
                     onChanged: (phoneNumber) {
                       setState(() {
                         phone = phoneNumber.completeNumber;
@@ -89,7 +91,7 @@ class _MyHomePageState extends State<MyHomePage> {
     await FirebaseAuth.instance.verifyPhoneNumber(
         phoneNumber: phone,
         verificationCompleted: (PhoneAuthCredential credential) async {
-          await FirebaseAuth.instance.signInWithCredential(credential);
+          final user = await FirebaseAuth.instance.signInWithCredential(credential);
           final snackBar = SnackBar(content: Text("Login Success"));
           ScaffoldMessenger.of(context).showSnackBar(snackBar);
         },
@@ -116,9 +118,12 @@ class _MyHomePageState extends State<MyHomePage> {
         PhoneAuthProvider.credential(verificationId: verId, smsCode: pin);
 
     try {
-      await FirebaseAuth.instance.signInWithCredential(credential);
-      final snackBar = SnackBar(content: Text("Login Success"));
-      ScaffoldMessenger.of(context).showSnackBar(snackBar);
+      UserCredential user = await FirebaseAuth.instance.signInWithCredential(credential);
+      var token = await user.user.getIdToken();
+      print(token);
+      setState(() {
+        this.token = token;
+      });
     } on FirebaseAuthException catch (e) {
       final snackBar = SnackBar(content: Text("${e.message}"));
       ScaffoldMessenger.of(context).showSnackBar(snackBar);
